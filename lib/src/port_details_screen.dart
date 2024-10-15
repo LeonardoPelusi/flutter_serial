@@ -30,7 +30,6 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   @override
   void dispose() {
     widget.port.close();
-
     super.dispose();
   }
 
@@ -49,11 +48,7 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   void _sendMessage(String message) {
     if (!widget.port.isOpen) return;
 
-    try {
-      widget.port.write(Uint8List.fromList(message.codeUnits));
-    } catch (e) {
-      print(e);
-    }
+    widget.port.write(Uint8List.fromList(message.codeUnits));
 
     // widget.port.write(Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]));
   }
@@ -62,7 +57,7 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
     SerialPortReader reader = SerialPortReader(widget.port);
 
     reader.stream.listen((data) {
-      print(data);
+      print('Data: $data');
       setState(() {
         response = String.fromCharCodes(data);
       });

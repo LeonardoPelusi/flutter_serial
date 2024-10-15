@@ -16,6 +16,8 @@ class _SerialScreenState extends State<SerialScreen> {
   void initState() {
     super.initState();
 
+    print(SerialPort.availablePorts);
+
     for (var portName in SerialPort.availablePorts) {
       _ports.add(SerialPort(portName));
     }
