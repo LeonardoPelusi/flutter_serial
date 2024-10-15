@@ -48,7 +48,11 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   void _sendMessage(String message) {
     if (!widget.port.isOpen) return;
 
-    widget.port.write(Uint8List.fromList(message.codeUnits));
+    try {
+      widget.port.write(Uint8List.fromList(message.codeUnits));
+    } on SerialPortError catch (e) {
+      print(e);
+    }
 
     // widget.port.write(Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]));
   }
