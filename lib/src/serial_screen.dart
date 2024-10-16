@@ -10,17 +10,11 @@ class SerialScreen extends StatefulWidget {
 }
 
 class _SerialScreenState extends State<SerialScreen> {
-  final List<SerialPort> _ports = [];
-
   @override
   void initState() {
     super.initState();
 
     print(SerialPort.availablePorts);
-
-    for (var portName in SerialPort.availablePorts) {
-      _ports.add(SerialPort(portName));
-    }
   }
 
   @override
@@ -31,15 +25,17 @@ class _SerialScreenState extends State<SerialScreen> {
         width: double.infinity,
         child: Column(
           children: List.generate(
-            _ports.length,
+            SerialPort.availablePorts.length,
             (index) => ElevatedButton(
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => PortDetailsScreen(port: _ports[index]),
+                  builder: (context) => PortDetailsScreen(
+                    portName: SerialPort.availablePorts[index],
+                  ),
                 ),
               ),
-              child: Text(_ports[index].name ?? 'Unknown'),
+              child: Text(SerialPort.availablePorts[index]),
             ),
           ),
         ),

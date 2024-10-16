@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
 class PortDetailsScreen extends StatefulWidget {
-  final SerialPort port;
+  final String portName;
   const PortDetailsScreen({
-    required this.port,
+    required this.portName,
     Key? key,
   }) : super(key: key);
 
@@ -15,27 +15,32 @@ class PortDetailsScreen extends StatefulWidget {
 }
 
 class _PortDetailsScreenState extends State<PortDetailsScreen> {
-  String? response;
+  var response;
+
+  late final SerialPort port;
 
   @override
   void initState() {
     super.initState();
+    port = SerialPort(widget.portName);
 
     AppLifecycleListener(
-      onInactive: () => widget.port.close(),
-      onResume: () => widget.port.openReadWrite(),
+      onInactive: () => port.close(),
+      onResume: () => port.openReadWrite(),
     );
   }
 
   @override
   void dispose() {
-    widget.port.close();
+    port.close();
+    port.dispose();
     super.dispose();
   }
 
   void _initializePort() {
-    widget.port.openReadWrite();
-    widget.port.config = SerialPortConfig()
+    port.openReadWrite();
+
+    port.config = SerialPortConfig()
       ..baudRate = 9600
       ..bits = 8
       ..stopBits = 1
@@ -46,39 +51,32 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   }
 
   void _sendMessage(String message) {
-    if (!widget.port.isOpen) return;
+    if (!port.isOpen) return;
 
     try {
-      widget.port.write(Uint8List.fromList(message.codeUnits));
-    } on SerialPortError catch (e) {
-      print(e);
-    }
+      port.write(Uint8List.fromList(message.codeUnits));
 
-    // widget.port.write(Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]));
+      // port.write(Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]));
+    } catch (e) {
+      print('Erro: $e');
+    }
   }
 
   void _listenToPort() {
-    SerialPortReader reader = SerialPortReader(widget.port);
+    SerialPortReader reader = SerialPortReader(port);
 
     reader.stream.listen((data) {
       print('Data: $data');
       setState(() {
-        response = String.fromCharCodes(data);
+        response = (data);
       });
-    });
-  }
-
-  void _readData() {
-    setState(() {
-      response = String.fromCharCodes(widget.port.read(100));
-      print(response);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.port.name ?? 'Unknown')),
+      appBar: AppBar(title: Text(port.name ?? 'Unknown')),
       body: SizedBox(
         width: double.infinity,
         child: Column(
@@ -95,17 +93,13 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
               onPressed: () => _sendMessage('Goper'),
               child: const Text('Send Goper'),
             ),
-            ElevatedButton(
-              onPressed: _readData,
-              child: const Text('Read Data'),
-            ),
             const SizedBox(height: 100),
             const Text(
               'RESPOSTA:',
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
             Text(
-              response ?? 'NADA',
+              response.toString(),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ],
