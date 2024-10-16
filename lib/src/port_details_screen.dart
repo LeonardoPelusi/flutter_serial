@@ -14,7 +14,7 @@ class PortDetailsScreen extends StatefulWidget {
 }
 
 class _PortDetailsScreenState extends State<PortDetailsScreen> {
-  var response;
+  String? response;
 
   late final SerialPort port;
 
@@ -60,8 +60,9 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
 
     reader.stream.listen((data) {
       print('Data: $data');
+
       setState(() {
-        response = (data);
+        response = String.fromCharCodes(data);
       });
     });
   }
