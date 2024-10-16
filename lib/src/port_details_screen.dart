@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
 
@@ -53,13 +52,7 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   void _sendMessage(String message) {
     if (!port.isOpen) return;
 
-    try {
-      port.write(Uint8List.fromList(message.codeUnits));
-
-      // port.write(Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]));
-    } catch (e) {
-      print('Erro: $e');
-    }
+    port.write(Uint8List.fromList(message.codeUnits));
   }
 
   void _listenToPort() {
