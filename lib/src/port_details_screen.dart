@@ -21,6 +21,7 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   @override
   void initState() {
     super.initState();
+
     port = SerialPort(widget.portName);
 
     AppLifecycleListener(
@@ -52,7 +53,11 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   void _sendMessage(String message) {
     if (!port.isOpen) return;
 
-    port.write(Uint8List.fromList(message.codeUnits));
+    final Uint8List bytes = Uint8List.fromList(message.codeUnits);
+
+    print('Sending: $message');
+
+    port.write(bytes, timeout: 1000);
   }
 
   void _listenToPort() {
