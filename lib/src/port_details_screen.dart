@@ -14,7 +14,7 @@ class PortDetailsScreen extends StatefulWidget {
 }
 
 class _PortDetailsScreenState extends State<PortDetailsScreen> {
-  String? response;
+  var response;
 
   late final SerialPort port;
 
@@ -38,6 +38,8 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   }
 
   void _initializePort() {
+    if (port.isOpen) return;
+
     port.openReadWrite();
 
     port.config = SerialPortConfig()
@@ -57,7 +59,24 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
 
     print('Sending: $message');
 
-    port.write(bytes, timeout: 1000);
+    port.write(bytes);
+  }
+
+  void _readSpeed() {
+    if (!port.isOpen) return;
+
+    final Uint8List bytes = Uint8List.fromList([0xf6, 0x10, 0x8c, 0xbe, 0xf4]);
+
+    port.write(bytes);
+  }
+
+  void _sendSpeed() {
+    if (!port.isOpen) return;
+
+    final Uint8List bytes =
+        Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]);
+
+    port.write(bytes);
   }
 
   void _listenToPort() {
@@ -67,7 +86,7 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
       print('Data: $data');
 
       setState(() {
-        response = String.fromCharCodes(data);
+        response = data;
       });
     });
   }
@@ -78,30 +97,40 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
       appBar: AppBar(title: Text(port.name ?? 'Unknown')),
       body: SizedBox(
         width: double.infinity,
-        child: Column(
-          children: [
-            ElevatedButton(
-              onPressed: _initializePort,
-              child: const Text('Initialize Port'),
-            ),
-            ElevatedButton(
-              onPressed: () => _sendMessage('Hello World!'),
-              child: const Text('Send Hello World'),
-            ),
-            ElevatedButton(
-              onPressed: () => _sendMessage('Goper'),
-              child: const Text('Send Goper'),
-            ),
-            const SizedBox(height: 100),
-            const Text(
-              'RESPOSTA:',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-            Text(
-              response.toString(),
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-            ),
-          ],
+        child: Center(
+          child: Column(
+            children: [
+              ElevatedButton(
+                onPressed: _initializePort,
+                child: const Text('Initialize Port'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendMessage('Hello World!'),
+                child: const Text('Send Hello World'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendMessage('Goper'),
+                child: const Text('Send Goper'),
+              ),
+              ElevatedButton(
+                onPressed: _readSpeed,
+                child: const Text('Read Speed'),
+              ),
+              ElevatedButton(
+                onPressed: _sendSpeed,
+                child: const Text('Send Speed'),
+              ),
+              const SizedBox(height: 100),
+              const Text(
+                'RESPOSTA:',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+              Text(
+                '$response',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
