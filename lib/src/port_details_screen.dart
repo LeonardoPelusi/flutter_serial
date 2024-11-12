@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_libserialport/flutter_libserialport.dart';
+import 'package:flutter_serial/src/constants/treadmill_commands.dart';
 
 class PortDetailsScreen extends StatefulWidget {
   final String portName;
@@ -16,7 +18,11 @@ class PortDetailsScreen extends StatefulWidget {
 class _PortDetailsScreenState extends State<PortDetailsScreen> {
   var response;
 
+  var lastCommmandSent;
+
   late final SerialPort port;
+
+  StreamSubscription<Uint8List>? subscription;
 
   @override
   void initState() {
@@ -34,6 +40,8 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
   void dispose() {
     port.close();
     port.dispose();
+    subscription?.cancel();
+    subscription = null;
     super.dispose();
   }
 
@@ -52,42 +60,25 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
     _listenToPort();
   }
 
-  void _sendMessage(String message) {
-    if (!port.isOpen) return;
-
-    final Uint8List bytes = Uint8List.fromList(message.codeUnits);
-
-    print('Sending: $message');
-
-    port.write(bytes);
-  }
-
-  void _readSpeed() {
-    if (!port.isOpen) return;
-
-    final Uint8List bytes = Uint8List.fromList([0xf6, 0x10, 0x8c, 0xbe, 0xf4]);
-
-    port.write(bytes);
-  }
-
-  void _sendSpeed() {
-    if (!port.isOpen) return;
-
-    final Uint8List bytes =
-        Uint8List.fromList([0xf6, 0xa0, 0x80, 0x10, 0x78, 0xf4]);
-
-    port.write(bytes);
-  }
-
   void _listenToPort() {
     SerialPortReader reader = SerialPortReader(port);
 
-    reader.stream.listen((data) {
+    subscription = reader.stream.listen((data) {
       print('Data: $data');
 
       setState(() {
         response = data;
       });
+    });
+  }
+
+  // ==========================================================
+
+  void _sendData(Uint8List data) {
+    port.write(data);
+
+    setState(() {
+      lastCommmandSent = data;
     });
   }
 
@@ -105,29 +96,74 @@ class _PortDetailsScreenState extends State<PortDetailsScreen> {
                 child: const Text('Initialize Port'),
               ),
               ElevatedButton(
-                onPressed: () => _sendMessage('Hello World!'),
-                child: const Text('Send Hello World'),
+                onPressed: () => _sendData(TreadmillCommands.initialize),
+                child: const Text('Start'),
               ),
               ElevatedButton(
-                onPressed: () => _sendMessage('Goper'),
-                child: const Text('Send Goper'),
+                onPressed: () => _sendData(TreadmillCommands.verifyError),
+                child: const Text('Verify Error'),
               ),
               ElevatedButton(
-                onPressed: _readSpeed,
-                child: const Text('Read Speed'),
+                onPressed: () => _sendData(TreadmillCommands.stop0xff),
+                child: const Text('Stop 0xff'),
               ),
               ElevatedButton(
-                onPressed: _sendSpeed,
-                child: const Text('Send Speed'),
+                onPressed: () => _sendData(TreadmillCommands.stop0x00),
+                child: const Text('Stop 0x00'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendData(TreadmillCommands.speed1200hz),
+                child: const Text('Speed 1200hz'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendData(TreadmillCommands.speed4000hz),
+                child: const Text('Speed 4000hz'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendData(TreadmillCommands.speed6000hz),
+                child: const Text('Speed 6000hz'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendData(TreadmillCommands.inclination1),
+                child: const Text('Inclination 1'),
+              ),
+              ElevatedButton(
+                onPressed: () => _sendData(TreadmillCommands.inclination4),
+                child: const Text('Inclination 4'),
               ),
               const SizedBox(height: 100),
-              const Text(
-                'RESPOSTA:',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-              ),
-              Text(
-                '$response',
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Column(
+                    children: [
+                      const Text(
+                        'ULTIMO COMANDO:',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                      Text(
+                        '$lastCommmandSent',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      const Text(
+                        'RESPOSTA:',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                      Text(
+                        '$response',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 20),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
