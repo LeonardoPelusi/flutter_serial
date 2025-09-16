@@ -1,0 +1,64 @@
+name: Build Android APK
+
+on:
+  push:
+    branches:
+      - main # Trigger on pushes to the main branch
+
+jobs:
+  build_apk:
+    runs-on: ubuntu-latest # Use the latest Ubuntu runner
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Action to checkout your repository code
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2 # Action to set up Flutter SDK
+        with:
+          flutter-version: '3.16.9' # Specify your Flutter version (or use 'stable', 'beta', 'dev')
+          channel: 'stable' # Specify the channel
+
+      - name: Install dependencies
+        run: flutter pub get # Installs your project's Dart dependencies
+
+      - name: Build Android APK (Release)
+        run: flutter build apk --release # Builds a debug APK
+        # For a release build, you would use:
+        # run: flutter build apk --release
+        # And you would need to handle signing (see below)
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4 # Action to upload artifacts
+        with:
+          name: app-release.apk
+          path: build/app/outputs/apk/release/app-release.apk
+
+# --- For Release Builds (Requires Keystore Setup) ---
+# Uncomment and configure the following section if you need to build signed release APKs.
+# Make sure to add your keystore file (base64 encoded) and passwords as GitHub Secrets.
+
+#      - name: Set up JDK 17
+#        uses: actions/setup-java@v4
+#        with:
+#          distribution: 'temurin'
+#          java-version: '17'
+#
+#      - name: Decode Keystore
+#        run: |
+#          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+#
+#      - name: Build Android APK (Release)
+#        run: |
+#          flutter build apk --release \
+#            --ks=${{ env.KEYSTORE_PATH }} \
+#            --ks-pass=${{ secrets.KEYSTORE_PASSWORD }} \
+#            --key-pass=${{ secrets.KEY_PASSWORD }}
+#        env:
+#          KEYSTORE_PATH: keystore.jks # The path to the decoded keystore file
+#
+#      - name: Upload Release APK artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: app-release.apk
+#          path: build/app/outputs/apk/release/app-release.apk
